@@ -546,7 +546,7 @@
          if (flush) {
              for (ServerLevel serverLevel : this.getAllLevels()) {
                  LOGGER.info("ThreadedAnvilChunkStorage ({}): All chunks are saved", serverLevel.getChunkSource().chunkMap.getStorageName());
-@@ -653,19 +_,49 @@
+@@ -653,19 +_,50 @@
          this.stopServer();
      }
  
@@ -593,6 +593,7 @@
              this.playerList.saveAll();
 -            this.playerList.removeAll();
 +            this.playerList.removeAll(this.isRestarting); // Paper
++            dev.wandering.PlayerSaveQueue.awaitAll(); // Wandering - async player save; quit saves must hit disk before shutdown
 +            try { Thread.sleep(100); } catch (InterruptedException ex) {} // CraftBukkit - SPIGOT-625 - give server at least a chance to send packets
          }
  

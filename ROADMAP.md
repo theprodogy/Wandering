@@ -38,7 +38,7 @@ Rules for every item:
 | 4 | Async mob spawn calculation | `NaturalSpawner` mob-cap counting each tick | Count spawn-category caps off-thread, spawn on main | Low: spawning itself stays on main with identical rules | Low | Pufferfish async mob spawning |
 | 5 | Parallel world ticking | Whole world tick: overworld, nether and end each on their own core | One tick thread per world, cross-world operations (portals, teleports) synced at tick boundaries | Medium: cross-dimension edge cases | High: plugins touching another world mid-tick; needs thread checks plus a sync fallback. Default off | SparklyPaper parallel world ticking |
 | 6 | Async entity collision / lookup prep | `getEntities` for collision, pushing, hoppers | Parallel broad-phase on a worker, narrow-phase results applied on main | Medium: order of collision resolution must match | Low | Research item; no proven implementation yet |
-| 7 | Async playerdata / stats / advancements saving | Disk writes on autosave and quit | Serialize on main, write the file on an IO worker | None | Low: plugins reading the file right after quit | Leaf / Gale async playerdata saving |
+| 7 | ✅ Async playerdata / stats / advancements saving (`player-data.async-save`) | Disk writes on autosave and quit | Serialize on main, write the file on an IO worker | None | Low: plugins reading the file right after quit | Leaf / Gale async playerdata saving |
 | 8 | Async structure locate (`/locate`, eyes of ender, treasure maps) | Long main-thread freezes on SMP | Search on a worker, complete the item/command when done | None (result identical, delivered later) | Low | Petal / Leaf async locator |
 
 Order of work: 2, 7, 1, 4, 3, 8, 5, 6. Safe, clear wins first; 5 and 6 only after the rest are profiled.

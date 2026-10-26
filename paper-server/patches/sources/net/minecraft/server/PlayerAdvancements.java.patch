@@ -17,15 +17,40 @@
  
      public PlayerAdvancements(DataFixer dataFixer, PlayerList playerList, ServerAdvancementManager manager, Path playerSavePath, ServerPlayer player) {
          this.playerList = playerList;
-@@ -126,6 +_,7 @@
+@@ -109,6 +_,7 @@
+     }
+ 
+     private void load(ServerAdvancementManager manager) {
++        dev.wandering.PlayerSaveQueue.await(this.playerSavePath); // Wandering - async player save
+         if (Files.isRegularFile(this.playerSavePath)) {
+             try (Reader bufferedReader = Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8)) {
+                 JsonElement jsonElement = StrictJsonParser.parse(bufferedReader);
+@@ -126,23 +_,26 @@
      }
  
      public void save() {
 +        if (org.spigotmc.SpigotConfig.disableAdvancementSaving) return; // Spigot
          JsonElement jsonElement = this.codec.encodeStart(JsonOps.INSTANCE, this.asData()).getOrThrow();
  
-         try {
-@@ -143,6 +_,7 @@
+-        try {
+-            FileUtil.createDirectoriesSafe(this.playerSavePath.getParent());
++        // Wandering start - async player save
++        final Path playerSavePath = this.playerSavePath;
++        dev.wandering.PlayerSaveQueue.write(playerSavePath, () -> {
++            FileUtil.createDirectoriesSafe(playerSavePath.getParent());
+ 
+-            try (Writer bufferedWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
++            try (Writer bufferedWriter = Files.newBufferedWriter(playerSavePath, StandardCharsets.UTF_8)) {
+                 GSON.toJson(jsonElement, GSON.newJsonWriter(bufferedWriter));
+             }
+-        } catch (JsonIOException | IOException var7) {
+-            LOGGER.error("Couldn't save player advancements to {}", this.playerSavePath, var7);
+-        }
++        }, e -> LOGGER.error("Couldn't save player advancements to {}", playerSavePath, e));
++        // Wandering end - async player save
+     }
+ 
+     private void applyFrom(ServerAdvancementManager advancementManager, PlayerAdvancements.Data data) {
          data.forEach((path, progress) -> {
              AdvancementHolder advancementHolder = advancementManager.get(path);
              if (advancementHolder == null) {

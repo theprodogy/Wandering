@@ -23071,7 +23071,7 @@ index 3e8870cf4eade33894c6b2f7d3d42a5607645118..9216e85e74bb0121c72665f155b07cf9
                  thread1 -> {
                      DedicatedServer dedicatedServer1 = new DedicatedServer(
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a5731ad3ab33 100644
+index 526c3bdd2471eff83e5c2d95246ad60e598e1674..c6fed9998617ff3caba1a3a4eae246cc7e3cdf7f 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -185,7 +185,7 @@ import net.minecraft.world.scores.ScoreboardSaveData;
@@ -23207,7 +23207,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
              flag = true;
          }
  
-@@ -946,7 +1038,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -947,7 +1039,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              }
          }
  
@@ -23216,7 +23216,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
              this.nextTickTimeNanos = Util.getNanos() + TimeUtil.NANOSECONDS_PER_MILLISECOND;
  
              for (ServerLevel serverLevelx : this.getAllLevels()) {
-@@ -956,18 +1048,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -957,18 +1049,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
              this.waitUntilNextTick();
          }
@@ -23242,7 +23242,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
  
          this.isSaving = false;
          this.resources.close();
-@@ -987,6 +1075,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -988,6 +1076,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              this.services().nameToIdCache().save(false); // Paper - Perf: Async GameProfileCache saving
          }
          // Spigot end
@@ -23257,7 +23257,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
          // Paper start - Improved watchdog support - move final shutdown items here
          Util.shutdownExecutors();
          this.onServerExit();
-@@ -1076,16 +1172,31 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1077,16 +1173,31 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              // execute small amounts of other tasks just in case the number of tasks we are
              // draining is large - chunk system and packet processing may be latency sensitive
  
@@ -23292,7 +23292,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
          profiler.pop(); // moonrise:run_all_chunk
          profiler.pop(); // moonrise:run_all_tasks
  
-@@ -1391,6 +1502,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1392,6 +1503,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      private boolean pollTaskInternal() {
          if (super.pollTask()) {
@@ -23300,7 +23300,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
              return true;
          } else {
              boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
-@@ -1532,6 +1644,13 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1533,6 +1645,13 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          // Paper - improve tick loop - moved into runAllTasksAtTickStart
          this.runAllTasksAtTickStart(); // Paper - improve tick loop
          this.tickServer(sprinting ? () -> false : this::haveTime);
@@ -23314,7 +23314,7 @@ index 97a6c426654fe2e103ed46bb295e098a9c9be526..8588b380f9b5375cdb2515a01e46a573
          this.tickFrame.end();
          this.recordEndOfTick(); // Paper - improve tick loop
          profilerFiller.pop();
-@@ -2557,6 +2676,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -2558,6 +2677,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          }
      }
  
@@ -27743,10 +27743,10 @@ index 4016d26304a0bf3894eed2bef72113b2ca2d7a6f..5014840bf5d7ef53a4fea8aa6f3b25eb
                      PrepareSpawnTask.this.loadListener.updateFocus(this.spawnLevel.dimension(), chunkPos);
                  }
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index e1a3af77d1566db9ad7a7976d6d69e08b2b32c99..38c30d98a200dd2a5c888cc080e9c77795f0e0c4 100644
+index f5a81e9111aa19f8a693875ca47c72f9d15a7692..e35dc927afcfdc7d4a7df2586fdeb4953edf55ef 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -973,8 +973,8 @@ public abstract class PlayerList {
+@@ -974,8 +974,8 @@ public abstract class PlayerList {
          player.connection.send(new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().get(GameRules.ADVANCE_TIME)));
          player.connection.send(new ClientboundSetDefaultSpawnPositionPacket(level.getRespawnData()));
          // Paper start - view distances
@@ -27757,7 +27757,7 @@ index e1a3af77d1566db9ad7a7976d6d69e08b2b32c99..38c30d98a200dd2a5c888cc080e9c777
          // Paper end - view distances
          if (level.isRaining()) {
              // CraftBukkit start - handle player weather
-@@ -1195,7 +1195,7 @@ public abstract class PlayerList {
+@@ -1196,7 +1196,7 @@ public abstract class PlayerList {
  
      public void setViewDistance(int viewDistance) {
          this.viewDistance = viewDistance;
@@ -27766,7 +27766,7 @@ index e1a3af77d1566db9ad7a7976d6d69e08b2b32c99..38c30d98a200dd2a5c888cc080e9c777
  
          for (ServerLevel serverLevel : this.server.getAllLevels()) {
              serverLevel.getChunkSource().setViewDistance(viewDistance);
-@@ -1204,7 +1204,7 @@ public abstract class PlayerList {
+@@ -1205,7 +1205,7 @@ public abstract class PlayerList {
  
      public void setSimulationDistance(int simulationDistance) {
          this.simulationDistance = simulationDistance;

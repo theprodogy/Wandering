@@ -722,7 +722,7 @@
              if (serverPlayer != except && serverPlayer.level().dimension() == dimension) {
                  double d = x - serverPlayer.getX();
                  double d1 = y - serverPlayer.getY();
-@@ -616,9 +_,11 @@
+@@ -616,9 +_,12 @@
      }
  
      public void saveAll() {
@@ -730,6 +730,7 @@
          for (int i = 0; i < this.players.size(); i++) {
              this.save(this.players.get(i));
          }
++        if (interval == -1) dev.wandering.PlayerSaveQueue.awaitAll(); // Wandering - async player save; full saves (save-all, shutdown) finish on disk
 +        return null; }); // Paper - ensure main
      }
  

@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
-@@ -31,6 +_,7 @@
+@@ -31,18 +_,25 @@
      }
  
      public void save(Player player) {
@@ -8,18 +8,33 @@
          try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
              TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
              player.saveWithoutId(tagValueOutput);
-@@ -42,7 +_,7 @@
+             Path path = this.playerDir.toPath();
+-            Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
+             CompoundTag compoundTag = tagValueOutput.buildResult();
+-            NbtIo.writeCompressed(compoundTag, path1);
+             Path path2 = path.resolve(player.getStringUUID() + ".dat");
              Path path3 = path.resolve(player.getStringUUID() + ".dat_old");
-             Util.safeReplaceFile(path2, path1, path3);
+-            Util.safeReplaceFile(path2, path1, path3);
++            // Wandering start - async player save
++            final String uuid = player.getStringUUID();
++            final String name = player.getPlainTextName();
++            dev.wandering.PlayerSaveQueue.write(path2, () -> {
++                Path path1 = Files.createTempFile(path, uuid + "-", ".dat");
++                NbtIo.writeCompressed(compoundTag, path1);
++                Util.safeReplaceFile(path2, path1, path3);
++            }, e -> LOGGER.warn("Failed to save player data for {}", name, e));
++            // Wandering end - async player save
          } catch (Exception var11) {
 -            LOGGER.warn("Failed to save player data for {}", player.getPlainTextName());
 +            LOGGER.warn("Failed to save player data for {}", player.getPlainTextName(), var11); // Paper - Print exception
          }
      }
  
-@@ -62,9 +_,25 @@
+@@ -61,10 +_,27 @@
+     }
  
      private Optional<CompoundTag> load(NameAndId nameAndId, String suffix) {
++        dev.wandering.PlayerSaveQueue.await(new File(this.playerDir, nameAndId.id() + ".dat").toPath()); // Wandering - async player save
          File file = new File(this.playerDir, nameAndId.id() + suffix);
 +        // Spigot start
 +        boolean usingWrongFile = false;

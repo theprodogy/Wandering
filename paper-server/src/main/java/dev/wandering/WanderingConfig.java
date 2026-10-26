@@ -14,6 +14,8 @@ public final class WanderingConfig {
 
     /** Batch outgoing packets per connection: one network task and one flush per batch instead of per packet. */
     public static boolean batchPacketFlush = true;
+    /** Write playerdata, stats and advancements files on an IO thread instead of the main thread. */
+    public static boolean asyncPlayerSave = true;
 
     private WanderingConfig() {
     }
@@ -27,6 +29,7 @@ public final class WanderingConfig {
         ));
 
         batchPacketFlush = get(config, "network.batch-packet-flush", true);
+        asyncPlayerSave = get(config, "player-data.async-save", true);
 
         try {
             config.save(file);
