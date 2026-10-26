@@ -88,7 +88,7 @@
          LOGGER.info("Loading properties");
          DedicatedServerProperties properties = this.settings.getProperties();
          if (this.isSingleplayer()) {
-@@ -221,8 +_,46 @@
+@@ -221,8 +_,47 @@
              this.setLocalIp(properties.serverIp);
          }
  
@@ -103,6 +103,7 @@
 +        this.paperConfigurations.initializeGlobalConfiguration(this.registryAccess());
 +        this.paperConfigurations.initializeWorldDefaultsConfiguration(this.registryAccess());
 +        // Paper end - initialize global and world-defaults configuration
++        dev.wandering.WanderingConfig.init((java.io.File) this.options.valueOf("paper-settings-directory")); // Wandering
 +        this.server.spark.enableEarlyIfRequested(); // Paper - spark
 +        // Paper start - fix converting txt to json file; convert old users earlier after PlayerList creation but before file load/save
 +        if (this.convertOldUsers()) {

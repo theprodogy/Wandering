@@ -178,6 +178,85 @@
                      } catch (RejectedExecutionException var6) {
                          this.disconnect(Component.translatable("multiplayer.disconnect.server_shutdown"));
                      } catch (ClassCastException var7) {
+@@ -210,6 +_,7 @@
+                 inboundConfigurationTask = inboundConfigurationTask.andThen(ctx -> ctx.pipeline().addAfter("decoder", "bundler", packetBundlePacker));
+             }
+ 
++            this.drainOutboundNow(); // Wandering - batch packet flush
+             syncAfterConfigurationChange(this.channel.writeAndFlush(inboundConfigurationTask));
+         }
+     }
+@@ -226,6 +_,7 @@
+             }
+ 
+             boolean flag = protocolInfo.id() == ConnectionProtocol.LOGIN;
++            this.drainOutboundNow(); // Wandering - batch packet flush
+             syncAfterConfigurationChange(this.channel.writeAndFlush(outboundConfigurationTask.andThen(ctx -> this.sendLoginDisconnect = flag)));
+         }
+     }
+@@ -299,8 +_,62 @@
+         }
+     }
+ 
++    // Wandering start - batch packet flush
++    private record OutboundPacket(Packet<?> packet, @Nullable ChannelFutureListener sendListener, boolean flush) {}
++    private final Queue<OutboundPacket> wanderingOutbound = new java.util.concurrent.ConcurrentLinkedQueue<>();
++    private final java.util.concurrent.atomic.AtomicBoolean wanderingDrainScheduled = new java.util.concurrent.atomic.AtomicBoolean();
++
++    // Runs on the event loop: writes everything queued in order, then flushes once if any packet asked for it
++    private void drainOutbound() {
++        boolean flush = false;
++        do {
++            OutboundPacket outbound;
++            while ((outbound = this.wanderingOutbound.poll()) != null) {
++                // Listeners can reconfigure the pipeline (compression, encryption, protocol), so they must fire before the next write
++                if (outbound.sendListener() != null || outbound.packet().hasFinishListener()) {
++                    this.doSendPacket(outbound.packet(), outbound.sendListener(), true);
++                    flush = false;
++                } else {
++                    this.doSendPacket(outbound.packet(), null, false);
++                    flush |= outbound.flush();
++                }
++            }
++            this.wanderingDrainScheduled.set(false);
++            // re-check: a sender may have queued after the poll loop but before the flag reset
++        } while (!this.wanderingOutbound.isEmpty() && this.wanderingDrainScheduled.compareAndSet(false, true));
++        if (flush && this.isConnected()) {
++            this.channel.flush();
++        }
++    }
++
++    // Called before writing directly to the channel or changing the pipeline, so queued packets keep their order
++    private void drainOutboundNow() {
++        if (dev.wandering.WanderingConfig.batchPacketFlush && this.channel != null && this.channel.eventLoop().inEventLoop() && !this.wanderingOutbound.isEmpty()) {
++            this.drainOutbound();
++        }
++    }
++    // Wandering end - batch packet flush
++
+     private void sendPacket(Packet<?> packet, @Nullable ChannelFutureListener sendListener, boolean flush) {
+         this.sentPackets++;
++        // Wandering start - batch packet flush
++        if (dev.wandering.WanderingConfig.batchPacketFlush) {
++            final boolean inEventLoop = this.channel.eventLoop().inEventLoop();
++            if (inEventLoop && this.wanderingOutbound.isEmpty() && !this.wanderingDrainScheduled.get()) {
++                this.doSendPacket(packet, sendListener, flush);
++                return;
++            }
++            this.wanderingOutbound.add(new OutboundPacket(packet, sendListener, flush));
++            if (this.wanderingDrainScheduled.compareAndSet(false, true)) {
++                if (inEventLoop) {
++                    this.drainOutbound();
++                } else {
++                    this.channel.eventLoop().execute(this::drainOutbound);
++                }
++            }
++            return;
++        }
++        // Wandering end - batch packet flush
+         if (this.channel.eventLoop().inEventLoop()) {
+             this.doSendPacket(packet, sendListener, flush);
+         } else {
 @@ -346,10 +_,30 @@
          }
      }
